@@ -1,12 +1,32 @@
-# React + Vite
+Quick Chat App
+Quick Chat is a real-time chat application built to provide a seamless and instant messaging experience. Whether for personal use or small team collaboration, this app allows users to communicate effortlessly.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+🚀 Features
+Real-time Messaging: Instantly send and receive messages without needing to refresh the page.
 
-Currently, two official plugins are available:
+User Authentication: Secure user registration and login.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Persistent Chat History: View your conversation history with other users.
 
-## Expanding the ESLint configuration
+Responsive Design: A clean, intuitive interface that works great on both desktop and mobile devices.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+🛠️ Technology Stack
+Frontend:
+
+React: A JavaScript library for building the user interface.
+
+Axios: A promise-based HTTP client for making API requests.
+
+Backend:
+
+Node.js: A JavaScript runtime for the server-side logic.
+
+Express.js: A minimal and flexible Node.js web application framework.
+
+Socket.IO: A library that enables real-time, bidirectional, event-based communication.
+
+Database:
+
+MongoDB: A NoSQL database used to store user information and messages.
+
+⚙️ Getting Starte
