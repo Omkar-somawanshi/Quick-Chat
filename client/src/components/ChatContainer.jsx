@@ -1,67 +1,36 @@
-import React, { useEffect } from 'react';
+import React,{useEffect,useRef} from 'react'
+import assets, { messagesDummyData } from '../assets/assets'
+import { formatMessageTime } from '../lib/utils'
 
-// Since the external files cannot be resolved in this environment,
-// we'll define the assets and dummy data directly within this component.
-const assets = {
-  default_profile: "https://placehold.co/100x100/A0A0A0/FFFFFF?text=User",
-  arrow_icon: "https://placehold.co/24x24/FFFFFF/000000?text=%3C",
-  help_icon: "https://placehold.co/24x24/FFFFFF/000000?text=?",
-  logo_icon: "https://placehold.co/64x64/FFFFFF/000000?text=Chat",
-  avatar_icon: "https://placehold.co/100x100/8185B2/FFFFFF?text=Me",
-};
-
-const messagesDummyData = [
-    { senderId: '680f50e4f10f3cd28382ecf9', text: 'Hey, how are you doing?', createdAt: new Date() },
-    { senderId: '2a1b3c4d5e6f7g8h9i0j1k2l', text: 'I am good, thanks! What about you?', createdAt: new Date() },
-    { senderId: '680f50e4f10f3cd28382ecf9', text: 'I am doing great!', createdAt: new Date() },
-    { senderId: '2a1b3c4d5e6f7g8h9i0j1k2l', text: 'Cool, let me know if you want to hang out sometime.', createdAt: new Date() },
-    { senderId: '680f50e4f10f3cd28382ecf9', text: 'Sounds good. I will.', createdAt: new Date() },
-];
-
-// This utility function formats the message time, which was previously in a separate file.
-const formatMessageTime = (date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
 
 // Assuming a current user ID exists, which would come from your auth context
 // or a prop. This is used to determine which messages are "sent" by the current user.
-const currentUserId = '680f50e4f10f3cd28382ecf9';
 
 const ChatContainer = ({ selectedUser, setSelectedUser }) => {
-  const scrollEnd = React.useRef();
+  const scrollEnd = useRef();
 
-  // This useEffect hook is triggered whenever a new user is selected,
-  // ensuring the chat scrolls to the bottom for the new conversation.
+  // This useEffect hook is now triggered whenever messagesDummyData changes,
+  // ensuring the chat scrolls to the bottom on new messages.
   useEffect(() => {
     if (scrollEnd.current) {
       scrollEnd.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [selectedUser]);
+  }, []); // The dependency array ensures this effect runs whenever messagesDummyData);
 
 
-  // Only render the chat interface if a user is selected
-  if (!selectedUser) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-4">
-        <img src={assets.logo_icon} className='max-w-16 mb-4' alt="App logo" />
-        <p className='text-lg font-medium text-white text-center'>Chat Anytime, Anywhere</p>
-      </div>
-    );
-  }
-
-  return (
+  return selectedUser ? (
     <div className="h-full overflow-hidden relative backdrop-blur-lg">
 
       {/* Header section with the selected user's profile info */}
       <div className='flex items-center gap-3 mx-4 p-4 border-b border-stone-500'>
         {/* Dynamic user image and name */}
         <img
-          src={selectedUser.profileImage || assets.default_profile}
-          alt={`${selectedUser.username}'s profile`}
+          src={assets.profile_martin}
+          alt=""
           className='w-8 rounded-full'
         />
         <p className='flex-1 text-lg text-white flex items-center gap-2 '>
-          {selectedUser.username}
+          Martin Johnson
           <span className='w-2 h-2 rounded-full bg-green-500'></span>
         </p>
 
@@ -69,8 +38,8 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
         <img
           onClick={() => setSelectedUser(null)}
           src={assets.arrow_icon}
-          alt="Go back"
-          className='md:hidden max-w-7 cursor-pointer'
+          alt=""
+          className='md:hidden max-w-7 '
         />
 
         {/* Help icon for desktop view */}
@@ -80,52 +49,53 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
       {/* Chat Area */}
       {/* The height is calculated to fit within the container and allow scrolling */}
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
-        {messagesDummyData.map((msg, index) => {
-          const isMyMessage = msg.senderId === currentUserId;
-          return (
-            <div
-              key={index}
-              // Conditional classes for alignment and styling
-              className={`flex items-end gap-2 ${isMyMessage ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className="flex flex-col">
-                {msg.image ? (
-                  <img
-                    src={msg.image}
-                    alt=""
-                    className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8'
-                  />
-                ) : (
-                  // Conditional background color for messages
-                  <p
-                    className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-2 break-all text-white ${
-                      isMyMessage ? 'bg-green-600' : 'bg-gray-700'
-                    }`}
-                  >
-                    {msg.text}
-                  </p>
-                )}
-                <p className={`text-gray-500 text-xs text-right mb-8 ${isMyMessage ? 'pr-1' : 'pl-1'}`}>
-                  {formatMessageTime(msg.createdAt)}
-                </p>
+        {messagesDummyData.map((msg, index) => (
+          <div key={index} className={`flex items-end gap-2 justify-end ${msg.senderId !== '680f5116f10f3cd28382ed02' && 'flex-row-reverse'}`}>
+            {msg.image ? (
+              <img src={msg.image} alt="" className='max-w-[230px] border border-gray-700 rounded-lgoverflow-hidden md-8' />
+            ) : (
+              <p className={`p-2  max-w-[200px] md:text-sm  font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${msg.senderId === '680f5116f10f3cd28382ed02' ? 'rounded-br-none' : 'rounded-bl-none' }`}> {msg.text}</p>
+              )}
+            <div className="text-center text-xs">
+              <img src={msg.senderId === '680f5116f10f3cd28382ed02' ? assets.profile_icon : assets.profile_martin}alt="" className='w-7 rounded-full'/>
+              <p className='text-gray-500'>{formatMessageTime( msg.createdAt) }</p>
               </div>
 
-              {/* Sender's avatar */}
-              <div className="text-center">
-                <img
-                  src={isMyMessage ? assets.avatar_icon : selectedUser.profileImage || assets.default_profile}
-                  alt="sender avatar"
-                  className='w-7 rounded-full'
-                />
-              </div>
+    
             </div>
-          );
-        })}
-        {/* Ref for auto-scrolling to the bottom of the chat */}
-        <div ref={scrollEnd}></div>
-      </div>
-    </div>
-  );
-};
+          ))}
+          <div ref={scrollEnd}></div>
+        </div>
+{/*---------bottom area--------*/ }
+<div className='absolute bottom-3 left-0 right-0 flex items-center gap-3 p-3'>
+  <div className='flex-1 flex items-center bg-gray-100/12 px-3 rounded-full'>
+    <input type="text" placeholder='Send a message'
+    className='flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400'/>
+    <input type="file" id='image' accept='image/png, image/jpeg' hidden/>
+    <label htmlFor="image">
+    <img src={assets.gallery_icon}alt="" className='w-5 mr-2 cursor-pointer' />
+</label>
+  </div>
+<img src={assets.send_button} alt="" className='w-7 cursor-pointer'/>
+</div>
 
-export default ChatContainer;
+
+
+    </div>
+  ) : (
+    <div className='flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 max-md:hidden'>
+      <img src={assets.logo_icon} className='max-w-16' alt="" />
+      <p className='text-lg font-medium text-white '> Chat anytime , anywhere</p>
+      </div>
+
+  )
+}
+        
+         
+                 
+             
+
+            
+     
+
+export default ChatContainer
