@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js"; // adjust path to your User model
 
+
 export const protectRoute = async (req, res, next) => {
   try {
     // Check for token in Authorization header (Bearer token)

@@ -1,17 +1,32 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import assets from '../assets/assets'; // make sure this path is correct
+import { AuthContext } from '../../context/AuthContext';
 
 const ProfilePage = () => {
+
+  const {authUser,updateProfile}=useContext(AuthContext)
   const [selectedImg, setSelectedImg] = useState(null);
   const navigate = useNavigate();
-  const [name, setName] = useState('MAARTIN JOHNSON');
-  const [bio, setBio] = useState("Hi Everyone, I am Using QuickChat");
+  const [name, setName] = useState(authUser.fullName);
+  const [bio, setBio] = useState(authUser.bio);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/');
+    if(!selectedImg){
+      await updateProfile({fullName:name,bio});
+ navigate('/');
+ return;
+
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedImg);
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      await updateProfile({profilePic:base64Image,fullName:name,bio});
+   navigate('/');
   };
+}
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,7 +89,7 @@ const ProfilePage = () => {
         {/* RIGHT: Profile Image Preview */}
         <div className="flex items-center justify-center p-6">
           <img
-            className="w-50 h-50 object-cover rborder-2 border-gray-500"
+            className={`w-50 h-50 object-cover rborder-2 border-gray-500 ${selectedImg && 'rounded-full'}`}
             src={ assets.logo_icon}
             alt="profile-preview"
           />

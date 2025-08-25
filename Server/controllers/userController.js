@@ -1,8 +1,10 @@
-import { generateToken } from "../lib/utils";
-import User from "../models/User";
+import { generateToken } from "../lib/utils.js";
+import User from "../models/User.js";
+import bcrypt from "bcrypt";
+import cloudinary from "../lib/cloudinary.js";
 
 //signup a user
-export const signup = async () => {
+export const signup = async (req, res) => { // Added req and res parameters
   const { fullName, email, password, bio } = req.body;
   try {
     if (!fullName || !email || !password || !bio) {
@@ -22,7 +24,7 @@ export const signup = async () => {
       bio,
     });
     const token = generateToken(newUser._id);
-    response.json({
+    res.json({ // Corrected from 'response' to 'res'
       success: true,
       userData: newUser,
       token,
@@ -30,34 +32,79 @@ export const signup = async () => {
     });
   } catch (error) {
     console.log(error.message);
-    response.json({ success: false, message: error });
+    res.json({ success: false, message: error.message }); // Corrected from 'response' to 'res'
   }
 };
 
-//controler to login a user
+//controller to login a user
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const userData = await User.findOne({ email });
 
-    const isPasswordMatch = await bcrypt.compare(password, userData.password);
-    if (!isPasswordCorrect) {
+    // Handle case where user is not found
+    if (!userData) {
       return res.json({ success: false, message: "Invalid Credentials" });
     }
-    const token = generateToken(newUser._id);
+
+    // Use the correct variable name: isPasswordMatch
+    const isPasswordMatch = await bcrypt.compare(password, userData.password);
+    
+    // Check if passwords match
+    if (!isPasswordMatch) {
+      return res.json({ success: false, message: "Invalid Credentials" });
+    }
+
+    const token = generateToken(userData._id); // Correctly using userData
     res.json({
       success: true,
-      userData: newUser,
+      userData: userData, // Correctly using userData
       token,
-      message: "Account created successfully",
+      message: "Logged in successfully", // Correct message for login
     });
   } catch (error) {
     console.log(error.message);
-    response.json({ success: false, message: error });
+    res.json({ success: false, message: error.message }); // Corrected from 'response' to 'res' and added .message
   }
 };
-//controler to check if user is authenticated
-export const checkAuth = async (req, res) => {
-res.jdon ({success: true, user: req.user});
 
-}
+//controller to check if user is authenticated
+export const checkAuth = async (req, res) => {
+  res.json({ success: true, user: req.user }); // Corrected 'jdon' to 'json'
+};
+
+//controller to update user profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic, bio, fullName } = req.body;
+
+    const userId = req.user._id;
+    let updatedUser;
+
+    if (!profilePic) {
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { bio, fullName },
+        { new: true }
+      );
+    } else {
+      const upload = await cloudinary.uploader.upload(profilePic);
+
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { profilePic: upload.secure_url, bio, fullName },
+        { new: true }
+      );
+    }
+    res.json({
+      success: true,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
