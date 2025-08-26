@@ -90,7 +90,7 @@ const ProfilePage = () => {
         <div className="flex items-center justify-center p-6">
           <img
             className={`w-50 h-50 object-cover rborder-2 border-gray-500 ${selectedImg && 'rounded-full'}`}
-            src={ assets.logo_icon}
+            src={authUser.profilePic || assets.logo_icon}
             alt="profile-preview"
           />
         </div>
