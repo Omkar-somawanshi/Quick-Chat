@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
-import { AuthContext } from "./AuthContext.jsx"; // import the context
-
+import { AuthContext } from "./AuthContext.jsx";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 axios.defaults.baseURL = backendUrl;
@@ -13,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [socket, setSocket] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const connectSocket = useCallback(
     (userData) => {
@@ -38,7 +38,16 @@ export const AuthProvider = ({ children }) => {
         connectSocket(data.user);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error(
+        "Auth check failed:",
+        error.response?.data?.message || error.message
+      );
+      setAuthUser(null);
+      setToken(null);
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+    } finally {
+      setLoading(false);
     }
   }, [connectSocket]);
 
@@ -48,15 +57,20 @@ export const AuthProvider = ({ children }) => {
       if (data.success) {
         setAuthUser(data.userData);
         connectSocket(data.userData);
-        axios.defaults.headers.common["token"] = data.token;
+
+        // ✅ Save token in both state, localStorage, and axios headers
         setToken(data.token);
         localStorage.setItem("token", data.token);
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${data.token}`;
+
         toast.success(data.message);
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -65,7 +79,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setAuthUser(null);
     setOnlineUsers([]);
-    axios.defaults.headers.common["token"] = null;
+    delete axios.defaults.headers.common["Authorization"];
     toast.success("Logged out successfully");
     if (socket) {
       socket.disconnect();
@@ -76,33 +90,50 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await axios.put("/api/auth/update-profile", body);
       if (data.success) {
-        setAuthUser(data.userData);
+        setAuthUser(data.user);
         toast.success("Profile updated successfully");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Failed to update profile");
     }
   };
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common["token"] = token;
+    const tokenFromStorage = localStorage.getItem("token");
+    if (tokenFromStorage) {
+      // ✅ Always set Bearer token in header
+      axios.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${tokenFromStorage}`;
       checkAuth();
+    } else {
+      setLoading(false);
     }
-  }, [token, checkAuth]);
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+    }
+  }, [token]);
 
   const value = {
-    axios,
     authUser,
     onlineUsers,
     socket,
     login,
     logout,
     updateProfile,
-    checkAuth,
+    loading,
   };
 
   return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;
