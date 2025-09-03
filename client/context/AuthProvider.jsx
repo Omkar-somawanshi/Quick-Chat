@@ -127,10 +127,11 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     loading,
+    axios
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={value}>[]
       {!loading && children}
     </AuthContext.Provider>
   );
