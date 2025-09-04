@@ -1,6 +1,6 @@
 import express from 'express';
 import "dotenv/config";
-import cors from 'cors'; // Import the CORS middleware
+import cors from 'cors';
 import http from 'http';
 import { connectDB } from './lib/db.js';
 import userRouter from './routes/userRoutes.js';
@@ -29,13 +29,14 @@ io.on("connection", (socket) => {
 
   if (userId) userSocketMap[userId] = socket.id;
 
-  // Emit online users to all clients
-  io.emit("online-users", Object.keys(userSocketMap));
+  // ✅ Changed from "online-users" to "getOnlineUsers" to match frontend
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
     console.log("❌ User Disconnected:", userId);
     if (userId) delete userSocketMap[userId];
-    io.emit("online-users", Object.keys(userSocketMap));
+    // ✅ Changed from "online-users" to "getOnlineUsers" to match frontend
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 

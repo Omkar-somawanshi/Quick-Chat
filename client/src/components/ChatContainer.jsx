@@ -5,13 +5,7 @@ import { ChatContext } from "../../context/ChatContext";
 import { AuthContext } from "../../context/AuthContext";
 
 const ChatContainer = () => {
-  const {
-    messages,
-    selectedUser,
-    setSelectedUser,
-    sendMessage,
-    getMessages,
-  } = useContext(ChatContext);
+  const { messages, selectedUser, setSelectedUser, sendMessage, getMessages } = useContext(ChatContext);
   const { authUser, onlineUsers } = useContext(AuthContext);
 
   const scrollEnd = useRef();
@@ -54,11 +48,7 @@ const ChatContainer = () => {
     <div className="h-full overflow-hidden relative backdrop-blur-lg">
       {/* Header */}
       <div className="flex items-center gap-3 mx-4 p-4 border-b border-stone-500">
-        <img
-          src={selectedUser.profilePic || assets.avatar_icon}
-          alt=""
-          className="w-8 rounded-full"
-        />
+        <img src={selectedUser.profilePic || assets.avatar_icon} alt="" className="w-8 rounded-full" />
         <p className="flex-1 text-lg text-white flex items-center gap-2 ">
           {selectedUser.fullName}
           {onlineUsers.includes(selectedUser._id) && (
@@ -73,55 +63,49 @@ const ChatContainer = () => {
           className="md:hidden max-w-7"
         />
 
-        <img
-          src={assets.help_icon}
-          alt="Help"
-          className="max-md:hidden max-w-5"
-        />
+        <img src={assets.help_icon} alt="Help" className="max-md:hidden max-w-5" />
       </div>
 
       {/* Chat Messages */}
       <div className="flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex items-end gap-2 justify-end ${
-              msg.senderId !== authUser._id && "flex-row-reverse"
-            }`}
-          >
-            {msg.image ? (
-              <img
-                src={msg.image}
-                alt=""
-                className="max-w-[230px] border border-gray-700 rounded-lg overflow-hidden md-8"
-              />
-            ) : (
-              <p
-                className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
-                  msg.senderId === authUser._id
-                    ? "rounded-br-none"
-                    : "rounded-bl-none"
-                }`}
-              >
-                {msg.text}
-              </p>
-            )}
-            <div className="text-center text-xs">
-              <img
-                src={
-                  msg.senderId === authUser._id
-                    ? authUser?.profilePic || assets.profile_icon
-                    : selectedUser?.profilePic || assets.avatar_icon
-                }
-                alt=""
-                className="w-7 rounded-full"
-              />
-              <p className="text-gray-500">
-                {formatMessageTime(msg.createdAt)}
-              </p>
+        {messages.map((msg, index) =>
+          msg && msg.senderId ? (
+            <div
+              key={index}
+              className={`flex items-end gap-2 justify-end ${
+                msg.senderId !== authUser._id ? "flex-row-reverse" : ""
+              }`}
+            >
+              {msg.image ? (
+                <img
+                  src={msg.image}
+                  alt=""
+                  className="max-w-[230px] border border-gray-700 rounded-lg overflow-hidden md-8"
+                />
+              ) : (
+                <p
+                  className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
+                    msg.senderId === authUser._id ? "rounded-br-none" : "rounded-bl-none"
+                  }`}
+                >
+                  {msg.text}
+                </p>
+              )}
+              <div className="text-center text-xs">
+                <img
+                  src={
+                    msg.senderId === authUser._id
+                      ? authUser?.profilePic || assets.profile_icon
+                      : selectedUser?.profilePic || assets.avatar_icon
+                  }
+                  alt=""
+                  className="w-7 rounded-full"
+                />
+                <p className="text-gray-500">{formatMessageTime(msg.createdAt)}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ) : null
+        )}
         <div ref={scrollEnd}></div>
       </div>
 
@@ -144,11 +128,7 @@ const ChatContainer = () => {
             hidden
           />
           <label htmlFor="image">
-            <img
-              src={assets.avatar_icon}
-              alt=""
-              className="w-5 mr-2 cursor-pointer"
-            />
+            <img src={assets.avatar_icon} alt="" className="w-5 mr-2 cursor-pointer" />
           </label>
         </div>
         <img

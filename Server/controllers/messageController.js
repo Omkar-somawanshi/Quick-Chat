@@ -78,6 +78,13 @@ export const sendMessage = async (req, res) => {
     const receiverId = req.params.id; // the chat partner
     const senderId = req.user._id;
 
+    console.log("📤 Sending message:", { 
+      senderId, 
+      receiverId, 
+      text: text ? "✓" : "✗", 
+      image: image ? "✓" : "✗" 
+    });
+
     let imageUrl;
     if (image) {
       const uploadedImage = await cloudinary.uploader.upload(image);
@@ -91,15 +98,19 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
     });
 
+    console.log("✅ Message created:", newMessage._id);
+
     // emit via socket.io if receiver online
     const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("new-message", newMessage);
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+      console.log("🔔 Socket message sent to:", receiverId);
     }
 
-    res.json({ success: true, message: newMessage });
+    // ✅ Fixed: Changed "message" to "newMessage" to match frontend expectation
+    res.json({ success: true, newMessage: newMessage });
   } catch (error) {
-    console.log(error.message);
+    console.log("❌ Send message error:", error.message);
     res.json({ success: false, message: error.message });
   }
 };
