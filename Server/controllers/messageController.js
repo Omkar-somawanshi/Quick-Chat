@@ -45,11 +45,23 @@ export const getMessages = async (req, res) => {
       ],
     }).sort({ createdAt: 1 });
 
-    // mark as seen
-    await Message.updateMany(
+    // ✅ Mark as seen and get count of updated messages
+    const updateResult = await Message.updateMany(
       { senderId: selectedUserId, receiverId: myId, seen: false },
       { seen: true }
     );
+
+    // ✅ Notify sender that their messages have been seen
+    if (updateResult.modifiedCount > 0) {
+      const senderSocketId = userSocketMap[selectedUserId];
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesMarkedSeen", {
+          senderId: myId,
+          receiverId: selectedUserId,
+          count: updateResult.modifiedCount
+        });
+      }
+    }
 
     res.json({ success: true, messages });
   } catch (error) {
@@ -62,7 +74,23 @@ export const getMessages = async (req, res) => {
 export const markMessageAsSeen = async (req, res) => {
   try {
     const { id } = req.params;
-    await Message.findByIdAndUpdate(id, { seen: true }, { new: true });
+    const message = await Message.findByIdAndUpdate(
+      id, 
+      { seen: true }, 
+      { new: true }
+    );
+
+    // ✅ Notify sender that message has been seen
+    if (message) {
+      const senderSocketId = userSocketMap[message.senderId];
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesMarkedSeen", {
+          senderId: req.user._id,
+          receiverId: message.senderId,
+          messageId: id
+        });
+      }
+    }
 
     res.json({ success: true, message: "Message marked as seen" });
   } catch (error) {
@@ -75,7 +103,7 @@ export const markMessageAsSeen = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
-    const receiverId = req.params.id; // the chat partner
+    const receiverId = req.params.id;
     const senderId = req.user._id;
 
     console.log("📤 Sending message:", { 
@@ -107,7 +135,6 @@ export const sendMessage = async (req, res) => {
       console.log("🔔 Socket message sent to:", receiverId);
     }
 
-    // ✅ Fixed: Changed "message" to "newMessage" to match frontend expectation
     res.json({ success: true, newMessage: newMessage });
   } catch (error) {
     console.log("❌ Send message error:", error.message);

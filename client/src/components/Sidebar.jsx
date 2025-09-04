@@ -11,7 +11,7 @@ const Sidebar = () => {
     selectedUser,
     setSelectedUser,
     unseenMessages,
-    setUnseenMessages,
+    setUnseenMessages, // ✅ Added this to destructuring
   } = useContext(ChatContext);
 
   const { logout, onlineUsers } = useContext(AuthContext);
@@ -25,6 +25,15 @@ const Sidebar = () => {
         user.fullName.toLowerCase().includes(input.toLowerCase())
       )
     : users;
+
+  // ✅ Clean handler function for user click
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setUnseenMessages(prev => ({
+      ...prev,
+      [user._id]: 0
+    }));
+  };
 
   useEffect(() => {
     getUsers();
@@ -70,7 +79,7 @@ const Sidebar = () => {
       <div className="flex flex-col">
         {filteredUsers.map((user, index) => (
           <div
-            onClick={() => setSelectedUser(user)}
+            onClick={() => handleUserClick(user)} // ✅ Fixed syntax error
             key={index}
             className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm ${
               selectedUser?._id === user._id && 'bg-[#282142]/50'
@@ -83,28 +92,23 @@ const Sidebar = () => {
             />
             <div className="flex flex-col leading-5">
               <p>{user.fullName}</p>
-           {
-                  onlineUsers.includes(user._id)
-                    ? (
-                        <span className="text-green-400 text-xs">Online</span>
-                      )
-                    : (
-                        <span className="text-neutral-400 text-xs">Offline</span>
-                      )
-                }
-              </div>
-              {
-                unseenMessages[user._id] > 0 && (
-                  <p className="absolute top-4 right-4 text-xs h-5 w-5 flex justify-center items-center rounded-full bg-violet-500/50">
-                    {unseenMessages[user._id]}
-                  </p>
-                )
-              }
+              {onlineUsers.includes(user._id) ? (
+                <span className="text-green-400 text-xs">Online</span>
+              ) : (
+                <span className="text-neutral-400 text-xs">Offline</span>
+              )}
             </div>
-          ))} 
-      </div>  
+            {/* ✅ Improved unseen message count display */}
+            {unseenMessages[user._id] && unseenMessages[user._id] > 0 && (
+              <p className="absolute top-4 right-4 text-xs h-5 w-5 flex justify-center items-center rounded-full bg-violet-500 text-white">
+                {unseenMessages[user._id] > 9 ? '9+' : unseenMessages[user._id]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
-};  
+};
 
 export default Sidebar;
