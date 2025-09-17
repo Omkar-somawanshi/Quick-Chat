@@ -63,6 +63,9 @@ app.use(cors({
 app.use("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", userRouter);
 app.use("/api/messages", messageRouter);
+app.get("/", (req, res) => {
+  res.send("✅ Quick Chat Backend is Live!");
+});
 
 // Function to start server after DB connects
 const startServer = async () => {
