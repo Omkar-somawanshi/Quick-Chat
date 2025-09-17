@@ -13,20 +13,19 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  "https://quick-chat-snowy-three.vercel.app/",
-
-  "https://quick-chat-sq4p.vercel.app/",
+  "https://quick-chat-snowy-three.vercel.app",
+  "https://quick-chat-snowy-three.vercel.app/login",
   "http://localhost:5173" // for local dev
 ];
-
 
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin : allowedOrigins, // keep consistent
+    origin: allowedOrigins,
     credentials: true,
   },
 });
+
 
 // Store online users (userId -> Set of socketIds)
 export const userSocketMap = new Map();
