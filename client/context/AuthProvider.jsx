@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { AuthContext } from "./AuthContext.jsx";
 
-const backendUrl =  "https://quick-chat-sq4p.vercel.app/";
+const backendUrl =  "https://quick-chat-mobt-three.vercel.app/";
 axios.defaults.baseURL = backendUrl;
 
 export const AuthProvider = ({ children }) => {
