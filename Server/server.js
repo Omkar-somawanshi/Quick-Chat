@@ -12,20 +12,19 @@ import cookieParser from "cookie-parser";
 const app = express();
 const server = http.createServer(app);
 
+// Use a single, clean array for allowed origins
 const allowedOrigins = [
   "https://quick-chat-snowy-three.vercel.app",
-  "https://quick-chat-snowy-three.vercel.app/login",
-  "http://localhost:5173" // for local dev
+  process.env.FRONTEND_URL || "http://localhost:5173", // Use environment variable
 ];
 
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: allowedOrigins, // Use the unified array
     credentials: true,
   },
 });
-
 
 // Store online users (userId -> Set of socketIds)
 export const userSocketMap = new Map();
@@ -62,7 +61,7 @@ io.on("connection", (socket) => {
 app.use(express.json({ limit: '4mb' }));
 app.use(cookieParser());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: allowedOrigins, // Use the same unified array here
   credentials: true,
 }));
 
