@@ -12,29 +12,34 @@ import cookieParser from "cookie-parser";
 const app = express();
 const server = http.createServer(app);
 
-// Use a single, clean array for allowed origins
-// const allowedOrigins = [
+// --- Middlewares ---
+app.use(express.json({ limit: "4mb" }));
+app.use(cookieParser());
 
-//   process.env.FRONTEND_URL || "http://localhost:5173", // Use environment variable
-// ];
+// Proper CORS setup for Express
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
 
-// Initialize socket.io with CORS
+// Socket.IO setup
 export const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL, // allow frontend URL
-    credentials: true, // allow cookies/auth headers
-    methods: ["GET", "POST", "PUT", "DELETE"], // allowed HTTP methods
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
-
-app.use(cors(io));
 
 // Store online users (userId -> Set of socketIds)
 export const userSocketMap = new Map();
 
-// Socket.io connection handler
+// Socket.IO connection handler
 io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
+  const userId = socket.handshake.auth.userId; // use handshake.auth
   console.log("✅ User Connected:", userId);
 
   if (userId) {
@@ -50,24 +55,18 @@ io.on("connection", (socket) => {
 
     if (userId && userSocketMap.has(userId)) {
       userSocketMap.get(userId).delete(socket.id);
-
-      if (userSocketMap.get(userId).size === 0) {
-        userSocketMap.delete(userId);
-      }
+      if (userSocketMap.get(userId).size === 0) userSocketMap.delete(userId);
     }
 
     io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
   });
 });
 
-// --- Middlewares must be placed before routes ---
-app.use(express.json({ limit: "4mb" }));
-app.use(cookieParser());
-
 // Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", userRouter);
 app.use("/api/messages", messageRouter);
+
 app.get("/", (req, res) => {
   res.send("✅ Quick Chat Backend is Live!");
 });
@@ -75,7 +74,7 @@ app.get("/", (req, res) => {
 // Function to start server after DB connects
 const startServer = async () => {
   try {
-    await connectDB(); // connect to DB first
+    await connectDB();
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () =>
       console.log(`🚀 Server is running on port: ${PORT}`)
