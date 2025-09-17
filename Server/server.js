@@ -1,11 +1,11 @@
-import express from 'express';
+import express from "express";
 import "dotenv/config";
-import cors from 'cors';
-import http from 'http';
-import { connectDB } from './lib/db.js';
-import userRouter from './routes/userRoutes.js';
-import messageRouter from './routes/messageRoutes.js';
-import { Server } from 'socket.io';
+import cors from "cors";
+import http from "http";
+import { connectDB } from "./lib/db.js";
+import userRouter from "./routes/userRoutes.js";
+import messageRouter from "./routes/messageRoutes.js";
+import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
 
 // Create express app and http server
@@ -21,10 +21,13 @@ const server = http.createServer(app);
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
+    origin: process.env.FRONTEND_URL, // allow frontend URL
+    credentials: true, // allow cookies/auth headers
+    methods: ["GET", "POST", "PUT", "DELETE"], // allowed HTTP methods
   },
 });
+
+app.use(cors(io));
 
 // Store online users (userId -> Set of socketIds)
 export const userSocketMap = new Map();
@@ -58,9 +61,8 @@ io.on("connection", (socket) => {
 });
 
 // --- Middlewares must be placed before routes ---
-app.use(express.json({ limit: '4mb' }));
+app.use(express.json({ limit: "4mb" }));
 app.use(cookieParser());
-
 
 // Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));
