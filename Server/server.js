@@ -15,38 +15,48 @@ const server = http.createServer(app);
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173", // keep consistent
+    credentials: true,
   },
 });
 
-// Store online users
-export const userSocketMap = {}; // { userId: socketId }
+// Store online users (userId -> Set of socketIds)
+export const userSocketMap = new Map();
 
 // Socket.io connection handler
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   console.log("✅ User Connected:", userId);
 
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    if (!userSocketMap.has(userId)) userSocketMap.set(userId, new Set());
+    userSocketMap.get(userId).add(socket.id);
+  }
 
-  // ✅ Changed from "online-users" to "getOnlineUsers" to match frontend
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  // Emit online users
+  io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
 
   socket.on("disconnect", () => {
     console.log("❌ User Disconnected:", userId);
-    if (userId) delete userSocketMap[userId];
-    // ✅ Changed from "online-users" to "getOnlineUsers" to match frontend
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+    if (userId && userSocketMap.has(userId)) {
+      userSocketMap.get(userId).delete(socket.id);
+
+      if (userSocketMap.get(userId).size === 0) {
+        userSocketMap.delete(userId);
+      }
+    }
+
+    io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
   });
 });
 
 // --- Middlewares must be placed before routes ---
 app.use(express.json({ limit: '4mb' }));
 app.use(cookieParser());
-// Configure the Express CORS middleware. This is the fix for your frontend.
 app.use(cors({
-  origin: "http://localhost:5173", // Replace with your frontend URL
-  credentials: true, // This is crucial for Axios to send headers
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
 }));
 
 // Routes
