@@ -13,15 +13,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Use a single, clean array for allowed origins
-const allowedOrigins = [
-  "https://quick-chat-snowy-three.vercel.app",
-  process.env.FRONTEND_URL || "http://localhost:5173", // Use environment variable
-];
+// const allowedOrigins = [
+
+//   process.env.FRONTEND_URL || "http://localhost:5173", // Use environment variable
+// ];
 
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Use the unified array
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   },
 });
@@ -60,10 +60,7 @@ io.on("connection", (socket) => {
 // --- Middlewares must be placed before routes ---
 app.use(express.json({ limit: '4mb' }));
 app.use(cookieParser());
-app.use(cors({
-  origin: allowedOrigins, // Use the same unified array here
-  credentials: true,
-}));
+
 
 // Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));
