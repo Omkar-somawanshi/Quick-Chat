@@ -12,10 +12,18 @@ import cookieParser from "cookie-parser";
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  "https://quick-chat-snowy-three.vercel.app/",
+
+  "https://quick-chat-sq4p.vercel.app/",
+  "http://localhost:5173" // for local dev
+];
+
+
 // Initialize socket.io with CORS
 export const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", // keep consistent
+    origin : allowedOrigins, // keep consistent
     credentials: true,
   },
 });
