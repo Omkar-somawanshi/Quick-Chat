@@ -39,7 +39,7 @@ export const userSocketMap = new Map();
 
 // Socket.IO connection handler
 io.on("connection", (socket) => {
-  const userId = socket.handshake.auth.userId; // use handshake.auth
+  const userId = socket.handshake.auth.userId;
   console.log("✅ User Connected:", userId);
 
   if (userId) {
@@ -49,6 +49,50 @@ io.on("connection", (socket) => {
 
   // Emit online users
   io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
+
+  // --------------------
+  // VIDEO CALL EVENTS
+  // --------------------
+
+  // Caller sends an offer to callee
+  socket.on("callUser", ({ userToCall, signalData, from, name }) => {
+    const calleeSockets = userSocketMap.get(userToCall);
+    if (calleeSockets) {
+      calleeSockets.forEach((socketId) => {
+        io.to(socketId).emit("receiveCall", { signal: signalData, from, name });
+      });
+    }
+  });
+
+  // Callee answers the call
+  socket.on("answerCall", ({ to, signal }) => {
+    const callerSockets = userSocketMap.get(to);
+    if (callerSockets) {
+      callerSockets.forEach((socketId) => {
+        io.to(socketId).emit("callAccepted", signal);
+      });
+    }
+  });
+
+  // Handle call rejection
+  socket.on("rejectCall", ({ to }) => {
+    const callerSockets = userSocketMap.get(to);
+    if (callerSockets) {
+      callerSockets.forEach((socketId) => {
+        io.to(socketId).emit("callRejected");
+      });
+    }
+  });
+
+  // End a call
+  socket.on("endCall", ({ to }) => {
+    const otherSockets = userSocketMap.get(to);
+    if (otherSockets) {
+      otherSockets.forEach((socketId) => {
+        io.to(socketId).emit("callEnded");
+      });
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("❌ User Disconnected:", userId);

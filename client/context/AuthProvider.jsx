@@ -14,21 +14,28 @@ export const AuthProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const connectSocket = useCallback(
-    (userData) => {
-      if (!userData || (socket && socket.connected)) return;
+const connectSocket = useCallback(
+  (userData) => {
+    if (!userData || (socket && socket.connected)) return;
 
-      const newSocket = io(backendUrl, {
-        query: { userId: userData._id },
-      });
+    const newSocket = io(backendUrl, {
+      auth: { userId: userData._id },   // ✅ FIXED
+      withCredentials: true,
+    });
 
-      setSocket(newSocket);
-      newSocket.on("getOnlineUsers", (userIds) => {
-        setOnlineUsers(userIds);
-      });
-    },
-    [socket]
-  );
+    setSocket(newSocket);
+
+    newSocket.on("getOnlineUsers", (userIds) => {
+      setOnlineUsers(userIds);
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+    });
+  },
+  [socket]
+);
+
 
   const checkAuth = useCallback(async () => {
     try {
