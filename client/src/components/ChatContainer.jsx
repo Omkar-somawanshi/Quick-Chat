@@ -375,10 +375,11 @@ const ChatContainer = () => {
     }
   }, [messages]);
 
-  // --- Video Call Socket Listeners ---
+  // --- Socket Listeners ---
   useEffect(() => {
     if (!socket) return;
 
+    // Receive call
     socket.on("receiveCall", ({ from, signal }) => {
       setReceivingCall(true);
       setCaller(from);
@@ -386,90 +387,99 @@ const ChatContainer = () => {
       setCallActive(true);
     });
 
+    // Call ended
     socket.on("callEnded", () => endCall());
 
-    socket.on("iceCandidate", (candidate) => {
-      connectionRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
+    // ICE candidate
+    socket.on("iceCandidate", async (candidate) => {
+      if (connectionRef.current) {
+        await connectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
+
+    // Answer received by caller
+    socket.on("callAccepted", async (signal) => {
+      if (connectionRef.current) {
+        await connectionRef.current.setRemoteDescription(
+          new RTCSessionDescription(signal)
+        );
+        setCallAccepted(true);
+      }
     });
 
     return () => {
       socket.off("receiveCall");
       socket.off("callEnded");
       socket.off("iceCandidate");
+      socket.off("callAccepted");
     };
   }, [socket]);
 
   // --- Video Call Functions ---
   const callUser = async () => {
     setCallActive(true);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     myVideo.current.srcObject = stream;
 
     const peer = new RTCPeerConnection();
+    connectionRef.current = peer;
+
+    // Add tracks
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
-    peer.ontrack = (event) => {
-      userVideo.current.srcObject = event.streams[0];
-    };
+    // Remote stream
+    peer.ontrack = (event) => (userVideo.current.srcObject = event.streams[0]);
 
+    // ICE candidates
     peer.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit("iceCandidate", { to: selectedUser._id, candidate: event.candidate });
       }
     };
 
+    // Create offer
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
 
+    // Send offer
     socket.emit("callUser", {
       userToCall: selectedUser._id,
-      signalData: offer,
       from: authUser._id,
+      signalData: offer,
       name: authUser.fullName,
     });
-
-    socket.on("callAccepted", async (answerSignal) => {
-      await peer.setRemoteDescription(new RTCSessionDescription(answerSignal));
-      setCallAccepted(true);
-    });
-
-    connectionRef.current = peer;
   };
 
   const answerCall = async () => {
-    setCallActive(true);
     setCallAccepted(true);
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     myVideo.current.srcObject = stream;
 
     const peer = new RTCPeerConnection();
+    connectionRef.current = peer;
+
+    // Add tracks
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
-    peer.ontrack = (event) => {
-      userVideo.current.srcObject = event.streams[0];
-    };
+    // Remote stream
+    peer.ontrack = (event) => (userVideo.current.srcObject = event.streams[0]);
 
+    // ICE candidates
     peer.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit("iceCandidate", { to: caller, candidate: event.candidate });
       }
     };
 
+    // Set remote description
     await peer.setRemoteDescription(new RTCSessionDescription(callerSignal));
 
+    // Create answer
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);
 
+    // Send answer to caller
     socket.emit("answerCall", { to: caller, signal: answer });
-
-    connectionRef.current = peer;
   };
 
   const endCall = () => {
@@ -518,7 +528,7 @@ const ChatContainer = () => {
       {/* Video Call Popup */}
       {callActive && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-[600px] h-[400px] bg-black rounded-xl shadow-xl flex flex-col items-center justify-center">
+          <div className="relative w-full max-w-[700px] h-[500px] bg-black rounded-xl shadow-xl flex flex-col items-center justify-center">
             {/* Remote Video */}
             <video
               ref={userVideo}
@@ -528,7 +538,7 @@ const ChatContainer = () => {
             />
 
             {/* Local Video */}
-            <div className="absolute top-4 right-4 w-24 h-24 bg-black rounded-lg overflow-hidden border-2 border-white">
+            <div className="absolute top-4 right-4 w-28 h-28 bg-black rounded-lg overflow-hidden border-2 border-white">
               <video
                 ref={myVideo}
                 autoPlay
